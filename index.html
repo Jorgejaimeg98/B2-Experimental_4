@@ -1,25 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Editor de Texto - Experimental 4</title>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <button>Negrita</button>
+    <div class="container">
+        <h1>📝 Editor de Texto - Analizador de Contenido</h1>
+        
+        <div class="toolbar">
+            <button onclick="aplicarNegrita()" title="Negrita"><strong>N</strong></button>
+            <button onclick="aplicarCursiva()" title="Cursiva"><em>C</em></button>
+            <button onclick="aplicarSubrayado()" title="Subrayado"><u>S</u></button>
+            <button onclick="convertirMayusculas()" title="Mayúsculas">A+</button>
+            <button onclick="convertirMinusculas()" title="Minúsculas">A-</button>
+            <button onclick="cortarTexto()" title="Cortar">✂️ Cortar</button>
+            <button onclick="copiarTexto()" title="Copiar">📋 Copiar</button>
+            <button onclick="pegarTexto()" title="Pegar">📌 Pegar</button>
+        </div>
+        
+        <div class="editor-area">
+            <div id="textoEntrada" class="editor" contenteditable="true" placeholder="Escribe tu texto aquí..."></div>
+        </div>
+        
+        <div class="controls">
+            <div class="input-small">
+                <label>Palabra a buscar:</label>
+                <input type="text" id="palabraBuscar" placeholder="Ej: programar">
+            </div>
+            
+            <div class="input-small">
+                <label>Carácter a contar:</label>
+                <input type="text" id="caracterContar" maxlength="1" placeholder="Ej: o">
+            </div>
+            
+            <div class="input-small">
+                <label>Fragmento agregar:</label>
+                <input type="text" id="fragmentoAgregar" placeholder="Ej: Hoy">
+            </div>
+            
+            <button class="btn-analizar" onclick="analizarTexto()">🔍 Analizar</button>
+        </div>
+        
+        <div id="resultados" class="resultados"></div>
+        
+        <div class="ejemplo">
+            <h3>💡 Ejemplo de Prueba</h3>
+            <pre>Hola Mundo.
+Tengo 2 perros y 1 gato.
+Ellos son felices!</pre>
+        </div>
+    </div>
 
-    <textarea name="" id="">
-        Hello, World! 
-    </textarea>
-
-    <textarea name="" id="" cols="30">dkdkd</textarea>
-
-    <textarea name="" id="" rows="10"></textarea>
-
-    <textarea name="" id="" cols="30" rows="10"></textarea>
-
-    <div id="resultado">Aquí se mostrarán los resultados</div>
-    <button onclick="inicio">Iniciar</button>
-    
+    <script src="javascript/cadenas.js"></script>
+    <script src="javascript/control.js"></script>
 </body>
 </html>

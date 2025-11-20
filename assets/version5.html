@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Texto - Práctica 4</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        
+        .toolbar button {
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .toolbar button:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .toolbar button:active {
+            transform: scale(0.95);
+        }
+        
+        .editor-area {
+            margin-bottom: 20px;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .input-small {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .input-small input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+        
+        .input-small label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+        
+        .btn-analizar {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            align-self: flex-end;
+        }
+        
+        .btn-analizar:hover {
+            background: #5568d3;
+        }
+        
+        .resultados {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .resultados h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .resultado-linea {
+            display: inline-block;
+            margin-right: 15px;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .resultado-linea strong {
+            color: #667eea;
+        }
+        
+        .resultado-especial {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            font-size: 13px;
+            word-wrap: break-word;
+        }
+        
+        .ejemplo {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .ejemplo h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .ejemplo pre {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Editor de Texto - Analizador de Contenido</h1>
+        
+        <div class="toolbar">
+            <button onclick="aplicarNegrita()" title="Negrita"><strong>N</strong></button>
+            <button onclick="aplicarCursiva()" title="Cursiva"><em>C</em></button>
+            <button onclick="aplicarSubrayado()" title="Subrayado"><u>S</u></button>
+            <button onclick="convertirMayusculas()" title="Mayúsculas">A+</button>
+            <button onclick="convertirMinusculas()" title="Minúsculas">A-</button>
+            <button onclick="cortarTexto()" title="Cortar">✂️ Cortar</button>
+            <button onclick="copiarTexto()" title="Copiar">📋 Copiar</button>
+            <button onclick="pegarTexto()" title="Pegar">📌 Pegar</button>
+        </div>
+        
+        <div class="editor-area">
+            <textarea id="textoEntrada" placeholder="Escribe tu texto aquí..."></textarea>
+        </div>
+        
+        <div class="controls">
+            <div class="input-small">
+                <label>Palabra a buscar:</label>
+                <input type="text" id="palabraBuscar" placeholder="Ej: programar">
+            </div>
+            
+            <div class="input-small">
+                <label>Carácter a contar:</label>
+                <input type="text" id="caracterContar" maxlength="1" placeholder="Ej: o">
+            </div>
+            
+            <div class="input-small">
+                <label>Fragmento agregar:</label>
+                <input type="text" id="fragmentoAgregar" placeholder="Ej: Hoy">
+            </div>
+            
+            <button class="btn-analizar" onclick="analizarTexto()">🔍 Analizar</button>
+        </div>
+        
+        <div id="resultados" class="resultados"></div>
+        
+        <div class="ejemplo">
+            <h3>💡 Ejemplo de Prueba</h3>
+            <pre>Hola Mundo.
+Tengo 2 perros y 1 gato.
+Ellos son felices!</pre>
+        </div>
+    </div>
+
+    <script>
+        var portapapeles = '';
+
+        // ===== FUNCIONES DE FORMATO =====
+        
+        function aplicarNegrita() {
+            var textarea = document.getElementById('textoEntrada');
+            var inicio = textarea.selectionStart;
+            var fin = textarea.selectionEnd;
+            var textoSeleccionado = textarea.value.substring(inicio, fin);
+            
+            if (textoSeleccionado.length > 0) {
+                var nuevoTexto = textarea.value.substring(0, inicio) + 
+                                '<b>' + textoSeleccionado + '</b>' + 
+                                textarea.value.substring(fin);
+                textarea.value = nuevoTexto;
+            } else {
+                alert('Selecciona un texto para aplicar negrita');
+            }
+        }
+        
+        function aplicarCursiva() {
+            var textarea = document.getElementById('textoEntrada');
+            var inicio = textarea.selectionStart;
+            var fin = textarea.selectionEnd;
+            var textoSeleccionado = textarea.value.substring(inicio, fin);
+            
+            if (textoSeleccionado.length > 0) {
+                var nuevoTexto = textarea.value.substring(0, inicio) + 
+                                '<i>' + textoSeleccionado + '</i>' + 
+                                textarea.value.substring(fin);
+                textarea.value = nuevoTexto;
+            } else {
+                alert('Selecciona un texto para aplicar cursiva');
+            }
+        }
+        
+        function aplicarSubrayado() {
+            var textarea = document.getElementById('textoEntrada');
+            var inicio = textarea.selectionStart;
+            var fin = textarea.selectionEnd;
+            var textoSeleccionado = textarea.value.substring(inicio, fin);
+            
+            if (textoSeleccionado.length > 0) {
+                var nuevoTexto = textarea.value.substring(0, inicio) + 
+                                '<u>' + textoSeleccionado + '</u>' + 
+                                textarea.value.substring(fin);
+                textarea.value = nuevoTexto;
+            } else {
+                alert('Selecciona un texto para aplicar subrayado');
+            }
+        }
+        
+        function convertirMayusculas() {
+            var textarea = document.getElementById('textoEntrada');
+            var inicio = textarea.selectionStart;
+            var fin = textarea.selectionEnd;
+            var textoSeleccionado = textarea.value.substring(inicio, fin);
+            
+            if (textoSeleccionado.length > 0) {
+                var textoMayus = '';
+                var mayusculas = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                var minusculas = 'abcdefghijklmnopqrstuvwxyz';
+                
+                for (var i = 0; i < textoSeleccionado.length; i++) {
+                    var encontrado = false;
+                    for (var j = 0; j < minusculas.length; j++) {
+                        if (textoSeleccionado[i] === minusculas[j]) {
+                            textoMayus = textoMayus + mayusculas[j];
+                            encontrado = true;
+                            break;
+                        }
+                    }
+                    if (!encontrado) {
+                        textoMayus = textoMayus + textoSeleccionado[i];
+                    }
+                }
+                
+                var nuevoTexto = textarea.value.substring(0, inicio) + textoMayus + textarea.value.substring(fin);
+                textarea.value = nuevoTexto;
+            } else {
+                alert('Selecciona un texto para convertir a mayúsculas');
+            }
+        }
+        
+        function convertirMinusculas() {
+            var textarea = document.getElementById('textoEntrada');
+            var inicio = textarea.selectionStart;
+            var fin = textarea.selectionEnd;
+            var textoSeleccionado = textarea.value.substring(inicio, fin);
+            
+            if (textoSeleccionado.length > 0) {
+                var textoMinus = '';
+                var mayusculas = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                var minusculas = 'abcdefghijklmnopqrstuvwxyz';
+                
+                for (var i = 0; i < textoSeleccionado.length; i++) {
+                    var encontrado = false;
+                    for (var j = 0; j < mayusculas.length; j++) {
+                        if (textoSeleccionado[i] === mayusculas[j]) {
+                            textoMinus = textoMinus + minusculas[j];
+                            encontrado = true;
+                            break;
+                        }
+                    }
+                    if (!encontrado) {
+                        textoMinus = textoMinus + textoSeleccionado[i];
+                    }
+                }
+                
+                var nuevoTexto = textarea.value.substring(0, inicio) + textoMinus + textarea.value.substring(fin);
+                textarea.value = nuevoTexto;
+            } else {
+                alert('Selecciona un texto para convertir a minúsculas');
+            }
+        }
+        
+        function cortarTexto() {
+            var textarea = document.getElementById('textoEntrada');
+            var inicio = textarea.selectionStart;
+            var fin = textarea.selectionEnd;
+            var textoSeleccionado = textarea.value.substring(inicio, fin);
+            
+            if (textoSeleccionado.length > 0) {
+                portapapeles = textoSeleccionado;
+                var nuevoTexto = textarea.value.substring(0, inicio) + textarea.value.substring(fin);
+                textarea.value = nuevoTexto;
+                alert('Texto cortado al portapapeles');
+            } else {
+                alert('Selecciona un texto para cortar');
+            }
+        }
+        
+        function copiarTexto() {
+            var textarea = document.getElementById('textoEntrada');
+            var inicio = textarea.selectionStart;
+            var fin = textarea.selectionEnd;
+            var textoSeleccionado = textarea.value.substring(inicio, fin);
+            
+            if (textoSeleccionado.length > 0) {
+                portapapeles = textoSeleccionado;
+                alert('Texto copiado al portapapeles');
+            } else {
+                alert('Selecciona un texto para copiar');
+            }
+        }
+        
+        function pegarTexto() {
+            var textarea = document.getElementById('textoEntrada');
+            var inicio = textarea.selectionStart;
+            var fin = textarea.selectionEnd;
+            
+            if (portapapeles.length > 0) {
+                var nuevoTexto = textarea.value.substring(0, inicio) + portapapeles + textarea.value.substring(fin);
+                textarea.value = nuevoTexto;
+            } else {
+                alert('No hay texto en el portapapeles');
+            }
+        }
+
+        // ===== FUNCIONES DE ANÁLISIS (15 EJERCICIOS) =====
+        
+        // Ejercicio 1: Contar palabras
+        function contarPalabras(frase) {
+            if (frase.length === 0) return 0;
+            
+            var contador = 1;
+            for (var i = 0; i < frase.length - 1; i++) {
+                if (frase[i] === ' ' && frase[i + 1] !== ' ') {
+                    contador++;
+                }
+            }
+            return contador;
+        }
+        
+        // Ejercicio 2: Contar signos de puntuación
+        function contarSignosPuntuacion(texto) {
+            var signos = '.,;:!?¿¡"';
+            var contador = 0;
+            
+            for (var i = 0; i < texto.length; i++) {
+                for (var j = 0; j < signos.length; j++) {
+                    if (texto[i] === signos[j]) {
+                        contador++;
+                        break;
+                    }
+                }
+            }
+            return contador;
+        }
+        
+        // Ejercicio 3: Contar vocales
+        function contarVocales(texto) {
+            var vocales = 'aeiouAEIOU';
+            var contador = 0;
+            
+            for (var i = 0; i < texto.length; i++) {
+                for (var j = 0; j < vocales.length; j++) {
+                    if (texto[i] === vocales[j]) {
+                        contador++;
+                        break;
+                    }
+                }
+            }
+            return contador;
+        }
+        
+        // Ejercicio 4: Contar consonantes
+        function contarConsonantes(texto) {
+            var vocales = 'aeiouAEIOU';
+            var letras = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            var contador = 0;
+            
+            for (var i = 0; i < texto.length; i++) {
+                var esLetra = false;
+                var esVocal = false;
+                
+                for (var j = 0; j < letras.length; j++) {
+                    if (texto[i] === letras[j]) {
+                        esLetra = true;
+                        break;
+                    }
+                }
+                
+                for (var k = 0; k < vocales.length; k++) {
+                    if (texto[i] === vocales[k]) {
+                        esVocal = true;
+                        break;
+                    }
+                }
+                
+                if (esLetra && !esVocal) {
+                    contador++;
+                }
+            }
+            return contador;
+        }
+        
+        // Ejercicio 5: Contar dígitos
+        function contarDigitos(texto) {
+            var digitos = '0123456789';
+            var contador = 0;
+            
+            for (var i = 0; i < texto.length; i++) {
+                for (var j = 0; j < digitos.length; j++) {
+                    if (texto[i] === digitos[j]) {
+                        contador++;
+                        break;
+                    }
+                }
+            }
+            return contador;
+        }
+        
+        // Ejercicio 6: Palabras con mayúscula inicial
+        function contarPalabrasMayuscula(texto) {
+            var mayusculas = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            var contador = 0;
+            var inicioPalabra = true;
+            
+            for (var i = 0; i < texto.length; i++) {
+                if (texto[i] === ' ' || texto[i] === '\n') {
+                    inicioPalabra = true;
+                } else if (inicioPalabra) {
+                    for (var j = 0; j < mayusculas.length; j++) {
+                        if (texto[i] === mayusculas[j]) {
+                            contador++;
+                            break;
+                        }
+                    }
+                    inicioPalabra = false;
+                }
+            }
+            return contador;
+        }
+        
+        // Ejercicio 7: Palabras con minúscula inicial
+        function contarPalabrasMinuscula(texto) {
+            var minusculas = 'abcdefghijklmnopqrstuvwxyz';
+            var contador = 0;
+            var inicioPalabra = true;
+            
+            for (var i = 0; i < texto.length; i++) {
+                if (texto[i] === ' ' || texto[i] === '\n') {
+                    inicioPalabra = true;
+                } else if (inicioPalabra) {
+                    for (var j = 0; j < minusculas.length; j++) {
+                        if (texto[i] === minusculas[j]) {
+                            contador++;
+                            break;
+                        }
+                    }
+                    inicioPalabra = false;
+                }
+            }
+            return contador;
+        }
+        
+        // Ejercicio 8: Contar párrafos
+        function contarParrafos(texto) {
+            if (texto.length === 0) return 0;
+            
+            var contador = 1;
+            for (var i = 0; i < texto.length; i++) {
+                if (texto[i] === '\n') {
+                    contador++;
+                }
+            }
+            return contador;
+        }
+        
+        // Ejercicio 9: Invertir texto
+        function invertirTexto(texto) {
+            var invertido = '';
+            for (var i = texto.length - 1; i >= 0; i--) {
+                invertido = invertido + texto[i];
+            }
+            return invertido;
+        }
+        
+        // Ejercicio 10: Contar caracteres
+        function contarCaracteres(texto) {
+            return texto.length;
+        }
+        
+        // Ejercicio 11: Buscar palabra
+        function buscarPalabra(texto, palabra) {
+            if (palabra.length === 0) return false;
+            
+            for (var i = 0; i <= texto.length - palabra.length; i++) {
+                var coincide = true;
+                
+                for (var j = 0; j < palabra.length; j++) {
+                    if (texto[i + j] !== palabra[j]) {
+                        coincide = false;
+                        break;
+                    }
+                }
+                
+                if (coincide) {
+                    var antesValido = i === 0 || texto[i - 1] === ' ' || texto[i - 1] === '\n';
+                    var despuesValido = i + palabra.length === texto.length || 
+                                       texto[i + palabra.length] === ' ' || 
+                                       texto[i + palabra.length] === '\n';
+                    
+                    if (antesValido && despuesValido) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
+        // Ejercicio 12: Contar carácter
+        function contarCaracter(texto, caracter) {
+            var contador = 0;
+            for (var i = 0; i < texto.length; i++) {
+                if (texto[i] === caracter) {
+                    contador++;
+                }
+            }
+            return contador;
+        }
+        
+        // Ejercicio 13: Posiciones pares
+        function contarPosicionesPares(texto) {
+            var contador = 0;
+            for (var i = 0; i < texto.length; i = i + 2) {
+                contador++;
+            }
+            return contador;
+        }
+        
+        // Ejercicio 14: Posiciones impares
+        function contarPosicionesImpares(texto) {
+            var contador = 0;
+            for (var i = 1; i < texto.length; i = i + 2) {
+                contador++;
+            }
+            return contador;
+        }
+        
+        // Ejercicio 15: Agregar texto
+        function agregarAlInicio(texto, fragmento) {
+            return fragmento + ' ' + texto;
+        }
+        
+        function agregarAlFinal(texto, fragmento) {
+            return texto + ' ' + fragmento;
+        }
+        
+        // ===== FUNCIÓN PRINCIPAL =====
+        
+        function analizarTexto() {
+            var texto = document.getElementById('textoEntrada').value;
+            var palabra = document.getElementById('palabraBuscar').value;
+            var caracter = document.getElementById('caracterContar').value;
+            var fragmento = document.getElementById('fragmentoAgregar').value;
+            
+            if (texto.length === 0) {
+                alert('Escribe un texto para analizar');
+                return;
+            }
+            
+            var html = '<h3>📊 Resultados:</h3>';
+            
+            html += '<div>';
+            html += '<span class="resultado-linea"><strong>Palabras:</strong> ' + contarPalabras(texto) + '</span>';
+            html += '<span class="resultado-linea"><strong>Signos:</strong> ' + contarSignosPuntuacion(texto) + '</span>';
+            html += '<span class="resultado-linea"><strong>Vocales:</strong> ' + contarVocales(texto) + '</span>';
+            html += '<span class="resultado-linea"><strong>Consonantes:</strong> ' + contarConsonantes(texto) + '</span>';
+            html += '<span class="resultado-linea"><strong>Dígitos:</strong> ' + contarDigitos(texto) + '</span>';
+            html += '<span class="resultado-linea"><strong>Mayúscula inicial:</strong> ' + contarPalabrasMayuscula(texto) + '</span>';
+            html += '<span class="resultado-linea"><strong>Minúscula inicial:</strong> ' + contarPalabrasMinuscula(texto) + '</span>';
+            html += '<span class="resultado-linea"><strong>Párrafos:</strong> ' + contarParrafos(texto) + '</span>';
+            html += '<span class="resultado-linea"><strong>Caracteres:</strong> ' + contarCaracteres(texto) + '</span>';
+            html += '<span class="resultado-linea"><strong>Pos. pares:</strong> ' + contarPosicionesPares(texto) + '</span>';
+            html += '<span class="resultado-linea"><strong>Pos. impares:</strong> ' + contarPosicionesImpares(texto) + '</span>';
+            html += '</div>';
+            
+            html += '<div class="resultado-especial"><strong>Texto invertido:</strong> ' + invertirTexto(texto) + '</div>';
+            
+            if (palabra.length > 0) {
+                var encontrada = buscarPalabra(texto, palabra);
+                html += '<div class="resultado-especial"><strong>Palabra "' + palabra + '":</strong> ' + 
+                        (encontrada ? '✅ SÍ encontrada' : '❌ NO encontrada') + '</div>';
+            }
+            
+            if (caracter.length > 0) {
+                html += '<div class="resultado-especial"><strong>Carácter "' + caracter + '":</strong> ' + 
+                        contarCaracter(texto, caracter) + ' veces</div>';
+            }
+            
+            if (fragmento.length > 0) {
+                html += '<div class="resultado-especial"><strong>Al inicio:</strong> ' + agregarAlInicio(texto, fragmento) + '</div>';
+                html += '<div class="resultado-especial"><strong>Al final:</strong> ' + agregarAlFinal(texto, fragmento) + '</div>';
+            }
+            
+            document.getElementById('resultados').innerHTML = html;
+            document.getElementById('resultados').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
